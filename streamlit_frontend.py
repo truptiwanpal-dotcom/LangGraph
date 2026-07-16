@@ -1,6 +1,10 @@
 import streamlit as st
 from langgraph_backend import chatbot
-from langchain_core.messages import HumanMessage
+
+try:
+    from langchain_core.messages import HumanMessage
+except ImportError:
+    HumanMessage = None
 
 user_input = st.chat_input("Type your message here...")
 CONFIG = {'configurable': {'thread_id': 'thread_1'}}
@@ -16,10 +20,15 @@ if user_input:
     with st.chat_message("user"):
         st.session_state['messages_history'].append({'role': 'user', 'content': user_input})
         st.text(user_input)
-    
-    response = chatbot.invoke({'messages': [HumanMessage(content=user_input)]}, config=CONFIG)
 
-    ai_message = response['messages'][-1].content
+    if HumanMessage is not None:
+        message = HumanMessage(content=user_input)
+    else:
+        message = {'role': 'user', 'content': user_input}
+
+    response = chatbot.invoke({'messages': [message]}, config=CONFIG)
+
+    ai_message = response['messages'][0].content
     with st.chat_message("assistant"):
         st.session_state['messages_history'].append({'role': 'assistant', 'content': ai_message})
         st.text(ai_message)
